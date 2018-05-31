@@ -1,0 +1,15 @@
+{
+    "name": "@mfe/html-webpack-plugin-awlet4",
+    "version": "0.0.1",
+    "main": "index.js",
+
+    "dependencies": {
+        "html-minifier": "^3.2.3",
+        "loader-utils": "^0.2.16",
+        "lodash": "^4.17.3",
+        "pretty-error": "^2.0.2",
+        "tapable": "^1.0.0",
+        "toposort": "^1.0.0",
+        "util.promisify": "1.0.0"
+    }
+}
