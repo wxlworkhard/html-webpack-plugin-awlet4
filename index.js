@@ -34,7 +34,9 @@ class HtmlWebpackPlugin {
       meta: {},
       title: 'Webpack App',
       xhtml: false
-    }, options);
+    }, options, {
+        entryKey: 'html-webpack-plugin' + Math.random().toFixed(5)
+    });
   }
 
   apply (compiler) {
@@ -68,7 +70,7 @@ class HtmlWebpackPlugin {
     // Backwards compatible version of: compiler.hooks.make.tapAsync()
     (compiler.hooks ? compiler.hooks.make.tapAsync.bind(compiler.hooks.make, 'HtmlWebpackPlugin') : compiler.plugin.bind(compiler, 'make'))((compilation, callback) => {
       // Compile the template (queued)
-      compilationPromise = childCompiler.compileTemplate(self.options.template, compiler.context, self.options.filename, compilation)
+      compilationPromise = childCompiler.compileTemplate(self.options.template, compiler.context, self.options.filename, compilation, self)
         .catch(err => {
           compilation.errors.push(prettyError(err, compiler.context).toString());
           return {
@@ -78,13 +80,7 @@ class HtmlWebpackPlugin {
         })
         .then(compilationResult => {
           // If the compilation change didnt change the cache is valid
-          
-          /**
-           * 修改为，因为 webpack 3.0 chunk.id 会在 1、0 之间反复变化，这里只要判读是否有 childCompilerHash 就能保证是增量编译的情况
-           */ 
-          // isCompilationCached = compilationResult.hash && self.childCompilerHash === compilationResult.hash;
-          
-          isCompilationCached = compilationResult.hash && !!self.childCompilerHash;
+          isCompilationCached = compilationResult.hash && self.childCompilerHash === compilationResult.hash;
           self.childCompilerHash = compilationResult.hash;
           self.childCompilationOutputName = compilationResult.outputName;
           callback();
@@ -94,13 +90,6 @@ class HtmlWebpackPlugin {
 
     // Backwards compatible version of: compiler.plugin.emit.tapAsync()
     (compiler.hooks ? compiler.hooks.emit.tapAsync.bind(compiler.hooks.emit, 'HtmlWebpackPlugin') : compiler.plugin.bind(compiler, 'emit'))((compilation, callback) => {
-      
-      /**
-       * 对 server 命令，不做 filterChunks、htmlWebpackPluginAssets 逻辑处理
-       */
-      if (isCompilationCached && self.options.cache && self.options.__command == 'server') {
-        return callback();
-      }
       
       const applyPluginsAsyncWaterfall = self.applyPluginsAsyncWaterfall(compilation);
       // Get chunks info as json
